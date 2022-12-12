@@ -1,117 +1,147 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
-
-import React from 'react';
-import type {Node} from 'react';
+import React, {useState} from 'react';
+import axios from 'axios';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
+  SafeAreaView,
+  Keyboard,
+  TouchableWithoutFeedback,
+  TextInput,
+  FlatList,
+  Pressable,
+  Image,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-/* $FlowFixMe[missing-local-annot] The type annotation(s) required by Flow's
- * LTI update could not be added via codemod */
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
-
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+export const App = () => {
+  const [input, setInput] = useState();
+  const [data, setData] = useState([]);
+  const onChangeText = async text => {
+    setInput(text);
+    if (text.length === 0) {
+      setData([]);
+    }
+    if (text.length > 2) {
+      getData(text);
+    }
   };
 
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+  const getData = async name => {
+    try {
+      const response = await axios.get(
+        `https://autocomplete.clearbit.com/v1/companies/suggest?query=${name}`,
+      );
+      setData(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const renderListItems = (elem, index) => {
+    const {item} = elem;
+    console.log(item);
+    return (
+      <Pressable
+        onPress={() => {
+          setInput(item.name);
+          setData([]);
+        }}
+        style={style.item}>
+        <View style={style.wrapper}>
+          <Image source={{uri: `${item.logo}`}} style={style.img} />
+          <View style={style.info}>
+            <Text style={style.name}>{item.name}</Text>
+            <Text style={style.domain}>{item.domain}</Text>
+          </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </Pressable>
+    );
+  };
+  console.log(data);
+  return (
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      <SafeAreaView style={style.safeAreaView}>
+        <Text style={style.label}>Компания</Text>
+        <TextInput
+          placeholder="Введите название компании"
+          value={input}
+          onChangeText={onChangeText}
+          style={style.input}
+        />
+        {data.length ? (
+          <FlatList
+            data={data}
+            renderItem={renderListItems}
+            keyExtractor={item => item.domain}
+            showsVerticalScrollIndicator
+            style={style.list}
+          />
+        ) : null}
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+const style = StyleSheet.create({
+  safeAreaView: {
+    flex: 1,
+    padding: 5,
+    backgroundColor: '#fff',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
+  label: {
+    marginLeft: 13,
+    marginVertical: 8,
     fontWeight: '400',
+    fontSize: 12,
+    lineHeight: 14,
+    color: '#484848',
   },
-  highlight: {
-    fontWeight: '700',
+  input: {
+    height: 40,
+    marginHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderTopRightRadius: 4,
+    borderTopLeftRadius: 4,
+    paddingHorizontal: 10,
+  },
+  img: {
+    width: 30,
+    height: 30,
+    marginRight: 10,
+  },
+  item: {
+    padding: 15,
+  },
+  list: {
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    backgroundColor: '#fff',
+    marginHorizontal: 12,
+    borderBottomRightRadius: 4,
+    borderBottomLeftRadius: 4,
+    shadowOffset: {width: -2, height: 4},
+    shadowColor: '#171717',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  wrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  name: {
+    color: '#000000',
+    fontWeight: '400',
+    fontSize: 14,
+    lineHeight: 16,
+  },
+  domain: {
+    marginTop: 5,
+    fontWeight: '400',
+    fontSize: 12,
+    lineHeight: 14,
+    color: '#9F9F9F',
   },
 });
-
-export default App;
