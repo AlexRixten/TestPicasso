@@ -11,6 +11,7 @@ import {
   FlatList,
   Pressable,
   Image,
+  Alert,
 } from 'react-native';
 
 export const App = () => {
@@ -33,7 +34,7 @@ export const App = () => {
       );
       setData(response.data);
     } catch (error) {
-      console.error(error);
+      Alert.alert(error.message);
     }
   };
 
